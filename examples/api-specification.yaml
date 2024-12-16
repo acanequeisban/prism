@@ -1,0 +1,1159 @@
+openapi: 3.0.3
+info:
+  title: "Customer Authentication - Local Dev"
+  version: 4.1.1
+  description: "This API manages a customer's authentication for their session in an application defined under the common application security model (CASM).\n\nThe API can be used to:\n- Authenticate a customer and log in to a session.\n- Refresh a customer session to keep it active.\n- Log out of a customer session."
+  contact:
+    name: Global Cyber CTO - Customer Identity Product
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+externalDocs:
+  description: Find out more about CIP
+  url: >-
+    https://santandernet.sharepoint.com/sites/SantanderPlatforms/SitePages/Customer-Identity-Platform.aspx
+servers:
+  - url: /v4/customer_authentication
+tags:
+  - name: Customer Login
+    description: >-
+      Implements the different authentication steps during the Customers Login process with single credentials like username & password
+  - name: Customer Logout
+    description: Implements the logout steps during the Customers Logout process
+  - name: Customer Keepalive
+    description: Implements the refresh access token during the Customers operation
+paths:
+  /customerlogin:
+    post:
+      security:
+        - CipBasicAuth: [ ]
+        - CipJwtProfileAuth: [ ]
+      tags:
+        - Customer Login
+      summary: Authenticate a customer
+      description: Authenticate a customer. The oauth authentication data of client_id and scopes will be sent and also data corresponding to the credentials which correspond to the alias, the password and a credential data field. If specific authentication is required, a response 401 will be returned waiting for such authentication to be sent.
+      operationId: authn_customer_login
+      parameters:
+        - $ref: "#/components/parameters/mock"
+        - $ref: "#/components/parameters/x-cip-authncustomer"
+      requestBody:
+        $ref: "#/components/requestBodies/AuthnCustomerLoginBodyRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/login_Ok_200"
+        "400":
+          $ref: "#/components/responses/login_400"
+        "401":
+          $ref: "#/components/responses/login_401"
+        "403":
+          $ref: "#/components/responses/login_403"
+        "404":
+          $ref: "#/components/responses/login_404"
+        "415":
+          $ref: "#/components/responses/login_415"
+        "500":
+          $ref: "#/components/responses/login_500"
+        "503":
+          $ref: "#/components/responses/login_503"
+        "504":
+          $ref: "#/components/responses/login_504"
+  /customerlogout:
+    get:
+      tags:
+        - Customer Logout
+      summary: Log outs a Customer
+      description: Log outs a Customer. B64URL(SHA2(AT)) code will be sent by header x-cip-authncustomer.
+      operationId: authn_customer_logout
+      parameters:
+        - $ref: "#/components/parameters/mock"
+        - in: header
+          name: x-cip-authncustomer
+          required: true
+          description: CIP session
+          schema:
+            type: string
+            format: byte
+          example: I3ESKVRQeGdwHLy8V6t5Lq8bwcfqxTEUbnJOZl9OHBY
+      responses:
+        "200":
+          $ref: "#/components/responses/logout_200"
+        "401":
+          $ref: "#/components/responses/logout_401"
+        "403":
+          $ref: "#/components/responses/logout_403"
+        "404":
+          $ref: "#/components/responses/logout_404"
+        "302":
+          $ref: "#/components/responses/logout_302"
+        "500":
+          $ref: "#/components/responses/logout_500"
+        "503":
+          $ref: "#/components/responses/logout_503"
+        "504":
+          $ref: "#/components/responses/logout_504"
+  /customerkeepalive:
+    post:
+      tags:
+        - Customer Keepalive
+      summary: Refresh Access token for a Customer
+      description: Refresh Access Token for a Customer. Returns a new access token & a refresh token with validity updated. Base64URL(SHA2(AT)) code will be sent by header parameter.
+      operationId: "cip_authn_customer_ut"
+      security:
+        - CipBasicAuth: []
+      parameters:
+        - $ref: "#/components/parameters/mock"
+        - in: header
+          name: x-cip-authncustomer
+          required: true
+          description: CIP session
+          schema:
+            type: string
+            format: byte
+          example: I3ESKVRQeGdwHLy8V6t5Lq8bwcfqxTEUbnJOZl9OHBY
+      responses:
+        "200":
+          $ref: "#/components/responses/keepalive_Ok_200"
+        "400":
+          $ref: "#/components/responses/keepalive_BadRequest_400"
+        "401":
+          $ref: "#/components/responses/keepalive_Unauthorized_401"
+        "403":
+          $ref: "#/components/responses/keepalive_Forbidden_403"
+        "404":
+          $ref: "#/components/responses/keepalive_Notfound_404"
+        "500":
+          $ref: "#/components/responses/keepalive_InternalServerError_500"
+        "503":
+          $ref: "#/components/responses/keepalive_ServiceUnavailable_503"
+        "504":
+          $ref: "#/components/responses/keepalive_GatewayTimeout_504"
+components:
+  securitySchemes:
+    CipBasicAuth:
+      description: |
+        ### `basicAuth` CIP definition
+          - The information will be a `username:password` string encode in base64:
+            - OAuth Public client
+              - **User Name**=client_id
+              - **Password**=redirect_uri
+              - **Example** = Y2xpZW50X2lkOnJlZGlyZWN0X3VyaQ==
+            - OAuth Confidential Client
+              - **User Name**=client_id
+              - **Password**=client_secret
+              - **Example** = Y2xpZW50X2lkOmNsaWVudF9zZWNyZXQ=
+      type: http
+      scheme: basic
+    CipJwtProfileAuth:
+      description: |
+        ### `Access token` CIP definition
+          - **opaque access token**: a random unique string of characters issued by an authorization server, not pass any identifiable information on the user
+          - **jwt Profile**: signed JWT token for OIDC provider in exchanged for an OAuth 2.0 access token
+      type: http
+      scheme: bearer
+      bearerFormat: AT/JWT # optional, arbitrary value for documentation purposes
+  parameters:
+    mock:
+      name: mock
+      in: header
+      description: Choose between mock (true) or real PF BR (false)
+      required: false
+      schema:
+        type: boolean
+        enum:
+          - true
+          - false
+        default: false
+    x-cip-authncustomer:
+      name: x-cip-authncustomer
+      in: header
+      required: false
+      description: CIP session
+      schema:
+        type: string
+        format: byte
+      example: I3ESKVRQeGdwHLy8V6t5Lq8bwcfqxTEUbnJOZl9OHBY
+  examples:
+    # login
+    login_request_200:
+      value:
+        oauth_data:
+          default:
+            client_id: 216d1e2c-2fe3-474d-b6c2-c66cf4527129
+            scopes: openid profile read.all
+        credentials:
+          - credential_type: USER_PASS
+            credential_data:
+              alias: Customer_CPF
+              password: "654321"
+          - credential_type: RISK_EVALUATION
+            credential_data:
+              data: >-
+                eyI3MDAzIjoiMSIsIjExMCI6IjAwMiIsIjI1MDQiOiItMSIsIjI1MDMiOiI5MUJBODQ3MjZFOEQ4MEI1ODU3QzI4NDI2QkQzMUQ5QyIsIjI1MDEiOiJ7XCJIYXJkd2FyZUlEXCI6XCJYRnpmZUhtdTYzRzk1VG5PcFdOMEs5eHBEYjJQMFRUeVZmZ1ByRDVPV0swXCIsXCJTSU1fSURcIjpcIi0xXCIsXCJQaG9uZU51bWJlclwiOlwiLTFcIixcIkdlb0xvY2F0aW9uSW5mb1wiOlt7XCJUaW1lc3RhbXBcIjpcIjBcIixcIlN0YXR1c1wiOjF9XSxcIkRldmljZU1vZGVsXCI6XCJzZGtfZ3Bob25lX3g4NlwiLFwiTXVsdGl0YXNraW5nU3VwcG9ydGVkXCI6dHJ1ZSxcIkRldmljZU5hbWVcIjpcIkRFVklDRUhNTE9QVElEXCIsXCJEZXZpY2VTeXN0ZW1OYW1lXCI6XCJBbmRyb2lkXCIsXCJEZXZpY2VTeXN0ZW1WZXJzaW9uXCI6XCIzMFwiLFwiTGFuZ3VhZ2VzXCI6XCJlblwiLFwiV2lGaU1hY0FkZHJlc3NcIjpcIjAyOjAwOjAwOjAwOjAwOjAwXCIsXCJXaUZpTmV0d29ya3NEYXRhXCI6e1wiQkJTSURcIjpcIi0xXCIsXCJTaWduYWxTdHJlbmd0aFwiOlwiLTEyN1wiLFwiQ2hhbm5lbFwiOlwibnVsbFwiLFwiU1NJRFwiOlwiLTFcIn0sXCJDZWxsVG93ZXJJZFwiOlwiLTFcIixcIkxvY2F0aW9uQXJlYUNvZGVcIjpcIi0xXCIsXCJTY3JlZW5TaXplXCI6XCIxMDgweDE5MjBcIixcIlJTQV9BcHBsaWNhdGlvbktleVwiOlwiOTFCQTg0NzI2RThEODBCNTg1N0MyODQyNkJEMzFEOUNcIixcIk1DQ1wiOlwiMFwiLFwiTU5DXCI6XCIwXCIsXCJPU19JRFwiOlwiNWVmMzJlMDc2NTFlZDk2MFwiLFwiU0RLX1ZFUlNJT05cIjpcIjMuNi4wXCIsXCJUSU1FU1RBTVBcIjpcIkZlYjE5LDIwMjQ1OjAzOjMxUE1cIixcIkNvbXByb21pc2VkXCI6MCxcIkVtdWxhdG9yXCI6MTAsXCJGcm9udENhbWVyYUF2YWlsYWJsZVwiOnRydWUsXCJFeGVjdXRlUGFyYWxsZWxcIjowLFwiQ2FsbEFjdGl2ZVwiOmZhbHNlLFwiUmVtb3RlRGF0YVwiOlwiMDAwMFwifSIsIjI1MDkiOiJlbiIsIjI1MDgiOiJERVZJQ0VITUxPUFRJRCIsIjI1MDciOiJ0cnVlIiwiMjUwNiI6InNka19ncGhvbmVfeDg2IiwiMjUwNSI6IlhGemZlSG11NjNHOTVUbk9wV04wSzl4cERiMlAwVFR5VmZnUHJENU9XSzAiLCI3MDEyIjoiOTFCQTg0NzI2RThEODBCNTg1N0MyODQyNkJEMzFEOUMiLCI4MTAwIjoiQVpXOEhVOGN3SVd6YjJZL2V3STJ1WW5LNW5MU01yWlZLc2hidkNqeHZrTnVISS9aa1BhbmRMSXNWUkFGcHZBbGM3RXk2OHF0cU5WUXFST0F0WTAxVUYvS3B1TEowWjh3T1d1emZmQ1o3UGIrck9ZVk1OYzJ5WEJsOFFJY3l6SUhsK3F4NHZoZStRNVIzQXVaNnZMR2tpYk5DWHJIdG94bkxtNXZnbjVVN2VabnNhdFN1aUJBRm1ZcHVid25iSG9xVGJzNitsb0Q5NzZxcWczVjNCTkQ4U1FTYmNzOWtpL25DalBHbndWbDgrajEwQzhlWjNuRHdoTUZNMnpETDUrNkZBZkZNcC91dXVaalAwZCswTDV0amJ2SXNpV1diSW9PQXV3MWZXcEgzMFNyRDBPaFVUNFlMUnVKVEF3eWRibkdhNzhuYlMyN2F6S1B4RXViTTYzNXZKSEkzUUJIZzNPeWVwZS9rdXFTRUJTdUF0SmZDQWNpbGdVL0lESjl2ekRuUFVTUkNrUVZlcVc3aXpZMSt1YzRNSDFJemw2RlBoM2hBdU1hWVd1V0gxYVdUS09tdndWNFhMcjJWUDBJcGNuUjk5U2w0UjVpU2hSTU11RER2SW8rQ3A0ZHlDQmJWNXVUY2V5VSsrY2g4d09QVVdxVHlSTUc0RG14NnJocUdudjdTazlib3F5eFJwbGFPRVlobUl0UGx1OVZjSHZ1clg2ZXFnV3daWTRONDR0Rno1OEZVenVmeW9vNXc5RkJoY2szYjh2NDF1d0lhUkpNVXBWdk16am5wdWRiVUN1RjgwKzJVU1hBNHoySWc4UmJCOVJCaWYxYXovZnBReW9ZVWtPanZ6bldJM1ZsZkJxTE9rRFRJclBZUjIzZnJvaVlWeTh0NklmNVQrdm1vTTlvcm9TNEZId1dmVXhpSElIUjQ0M3NaL1NmNG1ZRDlvRmU0WXIzOHBnWlZxeVpqNVViV2lIczVRSWkyQUhRS2tPa3FFNCtNaEwzTm5lYnBNVXdXd1pJT1MvbktaYWo1Z2o0c1p6OHdYRXgyTWhjTWRzb0hWU21tbGRVWEd5NnVjWE1HREJTOEhkVFVqVE5raVlOKzZjdmxVZFkycGI5TEFxU2MzZXZJeVN1MU8vOThBVElvWDdCQnVpYXVSRFQ1Q0JtcjBJby9CVXBibzI4aFVpd0hlejJPeGVmamZuVFNEMGtocnJzNUtmZGhsdHNhTDVkczJrRXFDUEpIeEdmZ3lMYzMwRDRXb2RSdVZoNVcrWUt4eUl4OGZOeDdrWEE5anBVSURLVTlwK2JRVWtOdWNKanF0UFdjOUtmL1BtS1JpUCsyNGdlTkVTS1FDYnVjZHBlR0JzOEtpSDFzVEFnU2FHbmVyU2JnUUsxM1NUSzNjRW95M2JxanFjTGcvdHh5WmRrT3I5SThoTEZDYndXNVp2L2NySlZ4UUxCVmRzT1Qxa054SElubzJrUlRSRGdwMlhVUWtSektiODZBOVVPak15MDdDbU90QkwzQlA1VnRwTVFoa1VwMG5PeGxDRjdHVEc5ekUrY3hJZ21ySDBNbWNBdDZlY2Q0RlNUTklTVVNoTXVQcjZ0bXB4b1ZjS2RKOHJMbXl2VkZNcngxZzlCTi9SaGIvUG9wWnlDQkluY2tpdEhWUndyTDFlL0ptdHRKTmNlVG5zMmFncEhMaUMvOXUyNWFsT0tXTmk5WjlVTFhvSENFUmVxY01PV3hJZEJFQktkN2ZGaFNVcHNKcmJFNm02MDVPaFRJell5Tld3ZnhjaWI4N1BjWEUxMU4wQThKcFRUR0h4cUY1a3hFUVkvLzdwT1pyTS9wZU44ME5mcmJKdFhGZVgxUVJabmRKT3hoVWJkYzZ3MStDOHA3NUNmZmZkd0pxeEhFYTd6bHpZVmtnQVFGYUYvdk9VcmJzNDZPZWZTeEJnMXVYam9KWHBWZDdEQTBWTi96aitIc21GeVpCN0NPVkVSem1lRUZZdlRjY3QvU3dpMWpMQ0F3UjRsOHpkZGE0UEdzdHAvbHM4aVVBcWxFREI0bE8wN1lBUDZsY2tIQy8yV0F3QUFOY2t3cFliZ2N3Sk1qdXY1aEFJakVub0VIYkpmTWNPRURCcTVlTzFUakN0Z2p4RGpjV2UvVmdudXkzZ0FWbndKd1VWV3F2RExHanB2ZHEvSDF4dzFxMU9ISUlJQlVIVC9Ea2NQcTlNTzFRdmxucUN6R0g2TTlYNnV1VUdyamtoUDNSMUN4T0MzK3VRTzJDaFVrMVlaZmNyR1ZqREpTaU54ZHd3V002RW5XMnUxWC9IYzAxcmlpUno4TXlKYUh0YWZlMm1tdCt0WGJlTk1uQmIzaURqVkd2UmlMUnFFbkFaQk9aOW0vSk5JU3pxNDk1YjVmSEU1RHZPV1hBUnFvMmVCTXZZQ0JUVlBnOVZQblpFTm5lY2VKRzY1YStxTjRhYVFGYnVMRWM3NU9scDBiVG8rSnhtZ0JoRk5kRHcxYUVDL21XM1cydis2Z0s3byt3aGV1Vy9LejA5NGZmNGh6b1NLa3JGVVp6Wkd3azJRIiwiMjAwMCI6IjE3Mi4yMC4xMTUuMiIsIjI1MTUiOiIyMy4xMS4xLjAiLCIyNTE0IjoiMiIsIjIiOiJNQkxHIiwiMjUxMiI6IjEwODB4MTkyMCIsIjQiOiJNQkJuVkpSRjFaNTNWWXl5a2tDR1VpbSIsIjYiOiJOYW9Vc2FyUGlsb3RvSW5tTW9iaWxlIiwiNyI6IjIwMDEyNjIzIiwiOCI6IldWZm02OWcyK1JhRHM0R2JaNkJjVm9PSmg4WT0iLCI5IjoiMjAyNC0wMi0xOTE0OjA1OjAxLjE2MyIsIjI1MTkiOiItMSIsIjI1MTgiOiItMSIsIjI1MTciOiIxIiwiMjUxNiI6IjEiLCIxMDAwIjoiMDMzIiwiMjUyNSI6IjEiLCIyMjA1IjoiRGFsdmlrLzIuMS4wKExpbnV4O1U7QW5kcm9pZDExO3Nka19ncGhvbmVfeDg2QnVpbGQvUlNSMS4yMDEwMTMuMDAxKSIsIjIwMDYiOiItMSIsIjIwMDQiOiItMTI3IiwiMjUyMSI6IjAiLCIyMDAzIjoiMzAiLCIyNTIwIjoiMCIsIjIwMDIiOiJBbmRyb2lkIiwiNTAxNCI6Ik4iLCIyNTM3IjoiTiIsIjEwMCI6IjAwMDA2MzdKIiwiMjUzNiI6IlMiLCIxMDEiOiJOYW9Vc2FyUGlsb3RvSW5tTW9iaWxlIiwiMTAyIjoiODg4ODUwMTI2NjMiLCIxMDA1IjoiMDEiLCIyNTMzIjoiLTEiLCIxMDA0IjoiMjAyMC0wMS0wOCIsIjEwNCI6IkYiLCIyNTMyIjoiUyIsIjEwMDIiOiIwMDAwMjA1MTQxMTMiLCIxMDAxIjoiMDAwMSIsIjI1MzgiOiJOIn0
+          - credential_type: DEVICE_CONTEXT
+            credential_data:
+              data: >-
+                aVBob25lfDMxMDA4MDA3NTQ4NzY0MjMzfGZmNzk3MmYzLThiMzQtNDMxYi05YjEwLTgwYjZkZjNhM2QxZg==
+          - credential_type: SCOPES
+            credential_data:
+              data: openid profile read.all
+    additional_credentials:
+      value:
+        response: "CREDENTIALS_REQUIRED"
+        response_result: "ADDITIONAL_AUTHENTICATION_REQUIRED_FOR_OPERATION"
+        description: "User must present additional authentication factors"
+        response_data:
+          code: 100000000
+          credential_type: "DEVICE_CONTEXT"
+    full_response_by_value:
+      value:
+        response: "LOGIN_SUCCESSFUL"
+        response_result: "LOGIN_SUCCESSFUL"
+        description: "The login was successful"
+        response_data:
+          code: 200000000
+          oidc_token:
+            id_token: >-
+              eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.AbVUinMiT3J_03je8WTOIl-VdggzvoFgnOsdouAs-DLOtQzau9valrq-S6pETyi9Q18HH-EuwX49Q7m3KC0GuNBJAc9Tksulgsdq8GqwIqZqDKmG7hNmDzaQG1Dpdezn2qzv-otf3ZZe-qNOXUMRImGekfQFIuH_MjD2e8RZyww6lbZk
+            idt_expires_in: 12000
+          oauth_tokens:
+            default:
+              access_token: >-
+                eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMiwiYXVkIjoidGVzdGFwaS5yZWFkIn0.AObHvl56f_l_Cg_Am17z3bcsS8eBigHUk2MIbjphJ9wag_e2ettf8KEaqaTWbGrBSDlrsMRRKKWxCmnY-zHes_1lAdSO_GaPF6IDyyYfUpghmejyb927RncRLq94KqBRj2gV6UB3nxJps_Oeo9mzAbvKvluiTJUBZbOP-bnWAfs05OCR
+              expires_in: 180
+              refresh_token: RjY2NjM5NzA2OWJjuE7c
+            cryptogram: >-
+              agETIWy6894jWXz4One+Oh+JhJWV5XdWe6wZb2rKcgTxj6jB5Zji2J4NX/mjRLOukMkJ6iP82hiO2q83eZ0ZDQ==
+    half_response_by_value:
+      value:
+        response: "LOGIN_SUCCESSFUL"
+        response_result: "LOGIN_SUCCESSFUL"
+        description: "The login was successful"
+        response_data:
+          code: 200000000
+          id_token: >-
+            eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.AbVUinMiT3J_03je8WTOIl-VdggzvoFgnOsdouAs-DLOtQzau9valrq-S6pETyi9Q18HH-EuwX49Q7m3KC0GuNBJAc9Tksulgsdq8GqwIqZqDKmG7hNmDzaQG1Dpdezn2qzv-otf3ZZe-qNOXUMRImGekfQFIuH_MjD2e8RZyww6lbZk
+          idt_expires_in: 12000
+          cryptogram: >-
+            agETIWy6894jWXz4One+Oh+JhJWV5XdWe6wZb2rKcgTxj6jB5Zji2J4NX/mjRLOukMkJ6iP82hiO2q83eZ0ZDQ==
+    full_response_by_ref:
+      value:
+        response: "LOGIN_SUCCESSFUL"
+        response_result: "LOGIN_SUCCESSFUL"
+        description: "The login was successful"
+        response_data:
+          code: 200000000
+          oidc_token:
+            id_token: >-
+              eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.AbVUinMiT3J_03je8WTOIl-VdggzvoFgnOsdouAs-DLOtQzau9valrq-S6pETyi9Q18HH-EuwX49Q7m3KC0GuNBJAc9Tksulgsdq8GqwIqZqDKmG7hNmDzaQG1Dpdezn2qzv-otf3ZZe-qNOXUMRImGekfQFIuH_MjD2e8RZyww6lbZk
+            idt_expires_in: 12000
+          oauth_tokens:
+            default:
+              access_token: jvlfajwpef09qr3u2fj
+              expires_in: 180
+              refresh_token: RjY2NjM5NzA2OWJjuE7c
+          cryptogram: >-
+            agETIWy6894jWXz4One+Oh+JhJWV5XdWe6wZb2rKcgTxj6jB5Zji2J4NX/mjRLOukMkJ6iP82hiO2q83eZ0ZDQ==
+    half_response_by_ref:
+      value:
+        response: "LOGIN_SUCCESSFUL"
+        response_result: "LOGIN_SUCCESSFUL"
+        description: "The login was successful"
+        response_data:
+          code: 200000000
+          id_token: >-
+            eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.AbVUinMiT3J_03je8WTOIl-VdggzvoFgnOsdouAs-DLOtQzau9valrq-S6pETyi9Q18HH-EuwX49Q7m3KC0GuNBJAc9Tksulgsdq8GqwIqZqDKmG7hNmDzaQG1Dpdezn2qzv-otf3ZZe-qNOXUMRImGekfQFIuH_MjD2e8RZyww6lbZk
+          idt_expires_in: 12000
+          cryptogram: >-
+            agETIWy6894jWXz4One+Oh+JhJWV5XdWe6wZb2rKcgTxj6jB5Zji2J4NX/mjRLOukMkJ6iP82hiO2q83eZ0ZDQ==
+    bad_request:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "BAD_REQUEST"
+        description: "Bad Request"
+        response_data:
+          code: 400000000
+    invalid_cryptogram_400:
+      value:
+        response: "CREDENTIALS_REQUIRED"
+        response_result: "CORRUPTED_CRYPTO"
+        description: "Invalid cryptogram"
+        response_data:
+          code: 400000001
+    invalid_credentials_401:
+      value:
+        response: "INVALID_CREDENTIALS"
+        response_result: "INVALID_CREDENTIALS"
+        description: "Invalid credentials"
+        response_data:
+          code: 401001000
+    one_try_left:
+      value:
+        response: "INVALID_CREDENTIALS"
+        response_result: "INVALID_CREDENTIALS"
+        description: "One try left"
+        response_data:
+          code: 401000001
+    two_attempts_left:
+      value:
+        response: "INVALID_CREDENTIALS"
+        response_result: "INVALID_CREDENTIALS"
+        description: "Two attempts left"
+        response_data:
+          code: 401000002
+    three_attempts_left:
+      value:
+        response: "INVALID_CREDENTIALS"
+        response_result: "INVALID_CREDENTIALS"
+        description: "Three attempts left"
+        response_data:
+          code: 401000003
+    inactive_user:
+      value:
+        response: "INVALID_CREDENTIALS"
+        response_result: "INVALID_CREDENTIALS"
+        description: "Inactive user"
+        response_data:
+          code: 401000004
+    cryptogram_expired:
+      value:
+        response: "INVALID_CREDENTIALS"
+        response_result: "INVALID_CREDENTIALS"
+        description: "Cryptogram expired"
+        response_data:
+          code: 401000005
+    user_blocked:
+      value:
+        response: "AUTHENTICATION_FAILED"
+        response_result: "BLOCKED_USER"
+        description: "Account lockedd"
+        response_data:
+          code: 401000100
+    account_not_found:
+      value:
+        response: "INVALID_CREDENTIALS"
+        response_result: "USER_NOT_FOUND"
+        description: "Account not found"
+        response_data:
+          code: 401000404
+    user_revoked:
+      value:
+        response: "AUTHENTICATION_FAILED"
+        response_result: "AUTHENTICATION_FAILED"
+        description: "Too many attempts, user revoked"
+        response_data:
+          code: 401000666
+    invalid_client:
+      value:
+        response: "INVALID_CREDENTIALS"
+        response_result: "INVALID_CLIENT"
+        description: "Invalid client"
+        response_data:
+          code: 401000777
+    login_forbidden_403:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "FORBIDDEN"
+        description: "Forbidden"
+        response_data:
+          code: 403000000
+    resource_not_found_404:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "RESOURCE_NOT_FOUND"
+        description: "Resource not found"
+        response_data:
+          code: 404000000
+    unsupported_media_type_415:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "UNSUPPORTED_MEDIA_TYPE"
+        description: "Unsupported media type"
+        response_data:
+          code: 415000000
+    internal_server_error_500:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "INTERNAL_SERVER_ERROR"
+        description: "Internal server error"
+        response_data:
+          code: 500000000
+    service_unavailable_503:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "SERVICE_UNAVAILABLE"
+        description: "Service Unavailable"
+        response_data:
+          code: 503000000
+    integration_layer:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "INTEGRATION_LAYER_ERROR"
+        description: "CIAM not available"
+        response_data:
+          code: 503000001
+    bind_timeout:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "BIND_TIME_OUT"
+        description: "Bind timeout"
+        response_data:
+          code: 503000002
+    login_504:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "GATEWAY_TIMEOUT"
+        description: "Gateway timeout"
+        response_data:
+          code: 504000000
+    # logout
+    logout_200:
+      value:
+        response: "LOGOUT_SUCCESSFUL"
+        response_result: "LOGOUT_SUCCESSFUL"
+        description: "The logout was successful"
+        response_data:
+          code: 200000000
+    logout_500:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "INTERNAL_SERVER_ERROR"
+        description: "Internal server error"
+        response_data:
+          code: 500000000
+    logout_401:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "UNAUTHORIZED"
+        description: "Unauthorized"
+        response_data:
+          code: 401000000
+    logout_403:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "FORBIDDEN"
+        description: "Forbidden"
+        response_data:
+          code: 403000000
+    logout_404:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "RESOURCE_NOT_FOUND"
+        description: "Resource not found"
+        response_data:
+          code: 404000000
+    logout_302:
+      value:
+        response: "REDIRECT_SUCCESSFUL"
+        response_result: "REDIRECT_SUCCESSFUL"
+        description: "The operation with redirect was successful"
+        response_data:
+          code: 302000000        
+    logout_503:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "SERVICE_UNAVAILABLE"
+        description: "Service Unavailable"
+        response_data:
+          code: 503000000
+    logout_504:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "GATEWAY_TIMEOUT"
+        description: "Gateway timeout"
+        response_data:
+          code: 504000000
+    # refresh
+    refresh_Ok_200:
+      value:
+        response: "REFRESH_SUCCESSFUL"
+        response_result: "REFRESH_SUCCESSFUL"
+        description: "The refresh was successful"
+        response_data:
+          code: 200000000
+          token_type: "Bearer"
+          access_token: "eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMiwiYXVkIjoidGVzdGFwaS5yZWFkIn0.AObHvl56f_l_Cg_Am17z3bcsS8eBigHUk2MIbjphJ9wag_e2ettf8KEaqaTWbGrBSDlrsMRRKKWxCmnY-zHes_1lAdSO_GaPF6IDyyYfUpghmejyb927RncRLq94KqBRj2gV6UB3nxJps_Oeo9mzAbvKvluiTJUBZbOP-bnWAfs05OCR"
+          expires_in: 180
+          refresh_token: 7Hl2NjM5NzA2OWJfCE99
+    refresh_BadRequest_400:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "BAD_REQUEST"
+        description: "Bad Request"
+        response_data:
+          code: 400000000
+    refresh_Unauthorized_401:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "UNAUTHORIZED"
+        description: "Operation not authorized"
+        response_data:
+          code: 401000000
+    refresh_Forbidden_403:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "FORBIDDEN"
+        description: "Forbidden operation"
+        response_data:
+          code: 403000000
+    refresh_NotFound_404:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "RESOURCE_NOT_FOUND"
+        description: "Resource not found"
+        response_data:
+          code: 404000000
+    refresh_InternalServerError_500:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "INTERNAL_SERVER_ERROR"
+        description: "Internal server error"
+        response_data:
+          code: 500000000
+    refresh_ServiceUnavailable_503:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "SERVICE_UNAVAILABLE"
+        description: "Service unavailable"
+        response_data:
+          code: 503000000
+    refresh_GatewayTimeout_504:
+      value:
+        response: "TECHNICAL_ERROR"
+        response_result: "GATEWAY_TIMEOUT"
+        description: "Gateway time out"
+        response_data:
+          code: 504000000
+  requestBodies:
+    AuthnCustomerLoginBodyRequest:
+      description: Authenticate the customer with at least username & password and optional data like contextual, risk data, etc to complement the credentials
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthnCustomerLoginRequest"
+          examples:
+            login_200:
+              $ref: "#/components/examples/login_request_200"
+  responses:
+    login_Ok_200:
+      description: Successful operation
+      headers:
+        x-cip-authncustomer:
+          required: true
+          schema:
+            type: string
+            format: byte
+          example: I3ESKVRQeGdwHLy8V6t5Lq8bwcfqxTEUbnJOZl9OHBY
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoginResponseData"
+          examples:
+            full_response_by_value:
+              $ref: "#/components/examples/full_response_by_value"
+            half_response_by_value:
+              $ref: "#/components/examples/half_response_by_value"
+            full_response_by_ref:
+              $ref: "#/components/examples/full_response_by_ref"
+            half_response_by_ref:
+              $ref: "#/components/examples/half_response_by_ref"
+    login_400:
+      description: Deny access due to invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoginResponseData"
+          examples:
+            bad_request:
+              $ref: "#/components/examples/bad_request"
+            invalid_cryptogram:
+              $ref: "#/components/examples/invalid_cryptogram_400"
+    login_401:
+      description: Deny access due credentials verification failed
+      headers:
+        WWW-Authenticate:
+          required: true
+          description: |
+            Indicates the CIP error code when the client attempted to authenticate.
+            - Mandatory when: CREDENTIALS_REQUIRED, when additional authentication is required
+          schema:
+            type: string
+          example: Bearer error="100000000"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoginResponseData"
+          examples:
+            invalid_credentials:
+              $ref: "#/components/examples/invalid_credentials_401"
+            one_try_left:
+              $ref: "#/components/examples/one_try_left"
+            two_attempts_left:
+              $ref: "#/components/examples/two_attempts_left"
+            three_attempts_left:
+              $ref: "#/components/examples/three_attempts_left"
+            cryptogram_expired:
+              $ref: "#/components/examples/cryptogram_expired"
+            user_revoked:
+              $ref: "#/components/examples/user_revoked"
+            invalid_client:
+              $ref: "#/components/examples/invalid_client"
+            user_blocked:
+              $ref: "#/components/examples/user_blocked"
+            inactive_user:
+              $ref: "#/components/examples/inactive_user"
+            account_not_found:
+              $ref: "#/components/examples/account_not_found"
+            additional_credentials:
+              $ref: "#/components/examples/additional_credentials"                   
+    login_403:
+      description: Not Authorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoginResponseData"
+          examples:
+            Login_Forbidden_403:
+              $ref: "#/components/examples/login_forbidden_403"            
+    login_404:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoginResponseData"
+          examples:
+            resource_not_found:
+              $ref: "#/components/examples/resource_not_found_404"
+    login_415:
+      description: Unsupported Media Type
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoginResponseData"
+          examples:
+            unsupported_media_type:
+              $ref: "#/components/examples/unsupported_media_type_415"
+    login_500:
+      description: Deny access due a technical server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoginResponseData"
+          examples:
+            internal_server_error:
+              $ref: "#/components/examples/internal_server_error_500"            
+    login_503:
+      description: Deny access due a technical server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoginResponseData"
+          examples:
+            service_unavailable:
+              $ref: "#/components/examples/service_unavailable_503"
+            integration_layer:
+              $ref: "#/components/examples/integration_layer"
+            bind_timeout:
+              $ref: "#/components/examples/bind_timeout"              
+    login_504:
+      description: Deny access due a technical server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoginResponseData"
+          examples:
+            login_504:
+              $ref: "#/components/examples/login_504"
+    logout_200:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LogoutResponseData"
+          examples:
+            logout_ok_200:
+              $ref: "#/components/examples/logout_200"
+    logout_302:
+      description: Successful operation with redirect
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LogoutResponseData"
+          examples:
+            logout_redirect_302:
+              $ref: "#/components/examples/logout_302"            
+    logout_500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LogoutResponseData"
+          examples:
+            logout_500:
+              $ref: "#/components/examples/logout_500"
+    logout_401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LogoutResponseData"
+          examples:
+            logout401:
+              $ref: "#/components/examples/logout_401"
+    logout_403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LogoutResponseData"
+          examples:
+            logout_403:
+              $ref: "#/components/examples/logout_403"
+    logout_404:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LogoutResponseData"
+          examples:
+            logout_404:
+              $ref: "#/components/examples/logout_404"
+    logout_503:
+      description: Service unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LogoutResponseData"
+          examples:
+            logout_500:
+              $ref: "#/components/examples/logout_503"
+            integration_layer:
+              $ref: "#/components/examples/integration_layer"
+            bind_timeout:
+              $ref: "#/components/examples/bind_timeout"              
+    logout_504:
+      description: Gateway time out
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LogoutResponseData"
+          examples:
+            logout_504:
+              $ref: "#/components/examples/logout_504"
+    keepalive_Ok_200:
+      description: Successful refresh operation
+      headers:
+        x-cip-authncustomer:
+          required: true
+          schema:
+            type: string
+            format: byte
+          example: I3ESKVRQeGdwHLy8V6t5Lq8bwcfqxTEUbnJOZl9OHBY
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/KeepAliveResponseData200"
+          examples:
+            refresh_Ok_200:
+              $ref: "#/components/examples/refresh_Ok_200"
+    keepalive_BadRequest_400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/KeepAliveResponseData"
+          examples:
+            refresh_BadRequest_400:
+              $ref: "#/components/examples/refresh_BadRequest_400"
+    keepalive_Unauthorized_401:
+      description: Not Authorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/KeepAliveResponseData"
+          examples:
+            refresh_Unauthorized_401:
+              $ref: "#/components/examples/refresh_Unauthorized_401"
+    keepalive_Forbidden_403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/KeepAliveResponseData"
+          examples:
+            refresh_Forbidden_403:
+              $ref: "#/components/examples/refresh_Forbidden_403"
+    keepalive_Notfound_404:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/KeepAliveResponseData"
+          examples:
+            refresh_NotFound_404:
+              $ref: "#/components/examples/refresh_NotFound_404"
+    keepalive_InternalServerError_500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/KeepAliveResponseData"
+          examples:
+            refresh_InternalServerError_500:
+              $ref: "#/components/examples/refresh_InternalServerError_500"
+    keepalive_ServiceUnavailable_503:
+      description: Service unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/KeepAliveResponseData"
+          examples:
+            refresh_ServiceUnavailable_503:
+              $ref: "#/components/examples/refresh_ServiceUnavailable_503"
+            integration_layer:
+              $ref: "#/components/examples/integration_layer"
+            bind_timeout:
+              $ref: "#/components/examples/bind_timeout"              
+    keepalive_GatewayTimeout_504:
+      description: Gateway time out
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/KeepAliveResponseData"
+          examples:
+            refresh_GatewayTimeout_504:
+              $ref: "#/components/examples/refresh_GatewayTimeout_504"
+  schemas:
+    CodeType:
+      type: object
+      description: Code type
+      properties:
+        code:
+          description: Response code to identify the processed request status
+          type: integer
+          format: int32
+          example: 200000000
+      required:
+        - code
+    CryptogramType:
+      type: object
+      description: Cryptogram type
+      properties:
+        cryptogram:
+          type: string
+          description: Cryptogram value
+          example: "agETIWy6894jWXz4One+Oh+JhJWV5XdWe6wZb2rKcgTxj6jB5Zji2J4NX/mjRLOukMkJ6iP82hiO2q83eZ0ZDQ=="
+      required:
+        - cryptogram
+    AuthnCustomerLoginRequest:
+      type: object
+      description: Authentication Customer login request object
+      properties:
+        oauth_data:
+          $ref: "#/components/schemas/OauthDataLoginRequest"
+        credentials:
+          type: array
+          description: List of credential items
+          items:
+            $ref: "#/components/schemas/CredentialDataType"
+      required:
+        - oauth_data
+        - credentials
+    OauthDataLoginRequest:
+      type: object
+      description: OAuth login request object
+      properties:
+        default:
+          $ref: "#/components/schemas/ServiceIdLoginRequest"
+    CredentialDataType:
+      type: object
+      description: Credential data properties
+      properties:
+        credential_type:
+          description: |
+            ### Type of required credentials:
+            
+            | Value | Description |
+            |---|---|
+            |USER_PASS|Authentication with User and password credentials|
+            |RISK_EVALUATION|Risk evaluation data|
+            |DEVICE_CONTEXT|Device information context|
+            |SCOPES|Specific authentication context|
+
+          type: string
+          enum:
+            - USER_PASS
+            - RISK_EVALUATION
+            - DEVICE_CONTEXT
+            - SCOPES
+          example: "USER_PASS"
+        credential_data:
+          $ref: "#/components/schemas/CredentialDataProperties"
+      required:
+        - credential_type
+    CredentialDataProperties:
+      type: object
+      description: Credential data properties
+      properties:
+        alias:
+          type: string
+          description: Credential client alias
+          example: "Customer CPF"
+        password:
+          type: string
+          description: Client
+          example: "36984521"
+        data:
+          type: string
+          description: Credential data
+          example: "mGcCF3b8/4ymH/cH+vSooRSKE/iS8Ani/WQTe+NWKmNwEQ2qQOJHo80kahm8AkPgerityhdFwyVBEq2HUaCgBA=="
+    ServiceIdLoginRequest:
+      type: object
+      description: Service ID login request object
+      properties:
+        client_id:
+          type: string
+          description: OAuth client id
+          format: uuid
+          example: 216d1e2c-2fe3-474d-b6c2-c66cf4527129
+        scopes:
+          type: string
+          description: OAuth scopes, and application can request one or more scopes separated by space
+          example: openid profile read.all
+    LoginResponseData:
+      type: object
+      description: Login response data object
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+      properties:
+        response_data:
+          description: Dynamic response data object, the content vary depending of the operation
+          anyOf: # Polymorphism, Schemas combination, non-discriminator, the data may be valid against one or more subschemes at the same time
+            - $ref: "#/components/schemas/CodeType"
+            - $ref: "#/components/schemas/CryptogramType"
+            - $ref: "#/components/schemas/OidcTokenData"
+            - $ref: "#/components/schemas/OidcTokenDataType"
+            - $ref: "#/components/schemas/CredentialDataType"
+      required:
+        - response_data
+    OidcTokenData:
+      type: object
+      description: OIDC token response object
+      properties:
+        oidc_token:
+          $ref: "#/components/schemas/OidcTokenDataType"
+        oauth_tokens:
+          $ref: "#/components/schemas/OauthTokenDataType"
+    ServiceIdTokenData:
+      type: object
+      description: OAuth token data items
+      properties:
+        access_token:
+          type: string
+          description: Access token
+          example: "eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.AbVUinMiT3J_03je8WTOIl-VdggzvoFgnOsdouAs-DLOtQzau9valrq-S6pETyi9Q18HH-EuwX49Q7m3KC0GuNBJAc9Tksulgsdq8GqwIqZqDKmG7hNmDzaQG1Dpdezn2qzv-otf3ZZe-qNOXUMRImGekfQFIuH_MjD2e8RZyww6lbZk"
+        expires_in:
+          description: Access token expiration time
+          type: integer
+          format: int32
+          example: 180
+        refresh_token:
+          description: Refresh token
+          type: string
+          example: "RjY2NjM5NzA2OWJjuE7c"
+    ServiceIdTokenData200:
+      type: object
+      description: OAuth token data items 200 ok
+      properties:
+        access_token:
+          type: string
+          description: Access token
+          example: "eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.AbVUinMiT3J_03je8WTOIl-VdggzvoFgnOsdouAs-DLOtQzau9valrq-S6pETyi9Q18HH-EuwX49Q7m3KC0GuNBJAc9Tksulgsdq8GqwIqZqDKmG7hNmDzaQG1Dpdezn2qzv-otf3ZZe-qNOXUMRImGekfQFIuH_MjD2e8RZyww6lbZk"
+        expires_in:
+          description: Access token expiration time
+          type: integer
+          format: int32
+          example: 180
+        refresh_token:
+          description: Refresh token
+          type: string
+          example: "RjY2NjM5NzA2OWJjuE7c"       
+      required:
+        - access_token
+        - expires_in
+        - refresh_token             
+    OauthTokenDataType:
+      type: object
+      description: OAuth token data
+      additionalProperties:
+          $ref: "#/components/schemas/ServiceIdTokenData"
+    OidcTokenDataType:
+      type: object
+      description: OIDC token data
+      properties:
+        id_token:
+          type: string
+          description: ID token
+          example: "eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.AbVUinMiT3J_03je8WTOIl-VdggzvoFgnOsdouAs-DLOtQzau9valrq-S6pETyi9Q18HH-EuwX49Q7m3KC0GuNBJAc9Tksulgsdq8GqwIqZqDKmG7hNmDzaQG1Dpdezn2qzv-otf3ZZe-qNOXUMRImGekfQFIuH_MjD2e8RZyww6lbZk"
+        idt_expires_in:
+          description: ID token expiration time
+          type: integer
+          format: int32
+          example: 12000
+    LogoutResponseData:
+      type: object
+      description: Logout response data
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+      properties:
+        response_data:
+          type: object
+          description: Response data, content vary depending operation
+          anyOf:
+            - $ref: "#/components/schemas/CodeType"
+            - $ref: "#/components/schemas/PostLoginUrlType"
+      required:
+        - response_data
+    PostLoginUrlType:
+      type: object
+      description: Post login url type
+      properties:
+        post_login_url:
+          type: string
+          description: Post login url property
+          example: https://post_login_url
+      required:
+        - post_login_url
+    KeepAliveResponseData:
+      type: object
+      description: Refresh token response data
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+      properties:
+        response_data:
+          type: object
+          description: Response data, content vary depending operation
+          anyOf:
+            - $ref: "#/components/schemas/CodeType"
+            - $ref: "#/components/schemas/ServiceIdTokenData"
+            - $ref: "#/components/schemas/TokenType"
+      required:
+        - response_data       
+    KeepAliveResponseData200:
+      type: object
+      description: Refresh token response data 200 ok
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+      properties:
+        response_data:
+          type: object
+          description: Response data, content vary depending operation
+          anyOf:
+            - $ref: "#/components/schemas/CodeType"
+            - $ref: "#/components/schemas/ServiceIdTokenData200"
+            - $ref: "#/components/schemas/TokenType200"
+      required:
+        - response_data  
+    TokenType:
+      type: object
+      description: Token type
+      properties:
+        token_type:
+          type: string
+          description: Token type
+          example: "Bearer"
+    TokenType200:
+      type: object
+      description: Token type 200 ok
+      properties:
+        token_type:
+          type: string
+          description: Token type
+          example: "Bearer"    
+      required:
+        - token_type                
+    BaseResponse:
+      type: object
+      description: Base response properties shared data
+      properties:
+        response:
+          type: string
+          description: |
+            ### Response indicative values:
+            - [Minimum error codes cip-pf](https://santandernet.sharepoint.com/:x:/r/sites/CIP-CustomerIdentityPlatform/_layouts/15/Doc2.aspx?action=edit&sourcedoc=%7Baf44a41b-bf02-4891-9f8d-82b5a813c4e6%7D&wdOrigin=TEAMS-MAGLEV.teamsSdk_ns.rwc&wdExp=TEAMS-TREATMENT&wdhostclicktime=1721218681055&web=1)
+            
+            | http code | PingAM code          | response_data.code | response              | response_result                                  | description                                         |
+            |-----------|----------------------|--------------------|-----------------------|--------------------------------------------------|-----------------------------------------------------|           
+            | 200       | 200                  | 200000000          | LOGIN_SUCCESSFUL      | LOGIN_SUCCESSFUL                                 | The login was successful                            |
+            | 200       | 200                  | 200000000          | REFRESH_SUCCESSFUL    | REFRESH_SUCCESSFUL                               | The refresh was successful                          |
+            | 200       | 200                  | 200000000          | LOGOUT_SUCCESSFUL     | LOGOUT_SUCCESSFUL                                | The logout was successful                           |
+            | 302       |                      | 302000000          | REDIRECT_SUCCESSFUL   | REDIRECT_SUCCESSFUL                              | Redirect Successful                                 |
+            | 400       | 302 + error, 400     | 400000000          | TECHNICAL_ERROR       | BAD_REQUEST                                      | Bad Request                                         |
+            | 400       |                      | 400000001          | CREDENTIALS_REQUIRED  | CORRUPTED_CRYPTO                                 | Invalid Cryptogram                                  |
+            | 401       |                      | 401000000          | TECHNICAL_ERROR       | UNAUTHORIZED                                     | Unauthorized                                        |
+            | 401       | 401                  | 401001000          | INVALID_CREDENTIALS   | INVALID_CREDENTIALS                              | Invalid credentials                                 |
+            | 401       |                      | 401000001          | INVALID_CREDENTIALS   | INVALID_CREDENTIALS                              | One Try left                                        |
+            | 401       |                      | 401000002          | INVALID_CREDENTIALS   | INVALID_CREDENTIALS                              | Two attempts left                                   |
+            | 401       |                      | 401000003          | INVALID_CREDENTIALS   | INVALID_CREDENTIALS                              | Three attempts left                                 |
+            | 401       |                      | 401000004          | INVALID_CREDENTIALS   | INVALID_CREDENTIALS                              | Inactive user                                       |
+            | 401       |                      | 401000005          | INVALID_CREDENTIALS   | INVALID_CREDENTIALS                              | Cryptogram expired                                  |
+            | 401       | 401 + account locked | 401000100          | AUTHENTICATION_FAILED | BLOCKED_USER                                     | Account locked                                      |
+            | 401       |                      | 401000404          | INVALID_CREDENTIALS   | USER_NOT_FOUND                                   | Account not Found                                   |
+            | 401       |                      | 401000666          | AUTHENTICATION_FAILED | AUTHENTICATION_FAILED                            | To many attempts                                    |
+            | 401       |                      | 401000777          | INVALID_CREDENTIALS   | INVALID_CLIENT                                   | Invalid Client                                      |
+            | 401       |                      | 100000000          | CREDENTIALS_REQUIRED  | ADDITIONAL_AUTHENTICATION_REQUIRED_FOR_OPERATION | User must present additional authentication factors |            
+            | 403       | 403                  | 403000000          | TECHNICAL_ERROR       | FORBIDDEN                                        | Forbidden                                           |
+            | 404       | 404                  | 404000000          | TECHNICAL_ERROR       | RESOURCE_NOT_FOUND                               | Resource Not Found                                  |
+            | 415       |                      | 415000000          | TECHNICAL_ERROR       | UNSUPPORTED_MEDIA_TYPE                           | Unsupported Media Type                              |
+            | 500       | 500                  | 500000000          | TECHNICAL_ERROR       | INTERNAL_SERVER_ERROR                            | Internal Server Error                               |
+            | 503       | 503                  | 503000000          | TECHNICAL_ERROR       | SERVICE_UNAVAILABLE                              | Service unavailable                                 |
+            | 503       |                      | 503000001          | TECHNICAL_ERROR       | INTEGRATION_LAYER_ERROR                          | CIAM not available                                  |
+            | 503       |                      | 503000002          | TECHNICAL_ERROR       | BIND_TIME_OUT                                    | Bind Timeout                                        |
+            | 504       |                      | 504000000          | TECHNICAL_ERROR       | GATEWAY_TIMEOUT                                  | Gateway timeout                                     |
+
+          enum:
+          - AUTHENTICATION_FAILED
+          - CREDENTIALS_REQUIRED
+          - INVALID_CREDENTIALS
+          - TECHNICAL_ERROR
+          - LOGIN_SUCCESSFUL
+          - REFRESH_SUCCESSFUL
+          - LOGOUT_SUCCESSFUL
+          - REDIRECT_SUCCESSFUL
+          example: "LOGIN_SUCCESSFUL"
+        response_result:
+          type: string
+          description: Additional response indicative values, see table indicative values response
+          enum:
+          - ADDITIONAL_AUTHENTICATION_REQUIRED_FOR_OPERATION
+          - LOGIN_SUCCESSFUL
+          - REFRESH_SUCCESSFUL
+          - LOGOUT_SUCCESSFUL
+          - CORRUPTED_CRYPTO
+          - REDIRECT_SUCCESSFUL
+          - BAD_REQUEST
+          - UNAUTHORIZED
+          - INVALID_PASSWORD
+          - INVALID_CREDENTIALS
+          - BLOCKED_USER
+          - USER_NOT_FOUND
+          - AUTHENTICATION_FAILED
+          - INVALID_CLIENT
+          - FORBIDDEN
+          - RESOURCE_NOT_FOUND
+          - UNSUPPORTED_MEDIA_TYPE
+          - INTERNAL_SERVER_ERROR
+          - SERVICE_UNAVAILABLE
+          - INTEGRATION_LAYER_ERROR
+          - BIND_TIME_OUT
+          - GATEWAY_TIMEOUT
+          example: "LOGIN_SUCCESSFUL"
+        description:
+          type: string
+          description: Response description value
+          nullable: true
+          example: "Successful operation"
+      required:
+        - response
+        - response_result
+        - description
