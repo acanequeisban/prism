@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.2",
   "info": { "title": "XpressID API", "description": "Download Postman Collection: <a class=\"pc-css\" target=\"_blank\" href=\"../XpressID.postman_collection.zip\">Download</a><br><br>\n", "version": "3.5" },
-  "servers": [ { "url": "https://api-work.eu.veri-das.com/xpressid", "description": "Sandbox server" }, { "url": "https://api.eu.veri-das.com/xpressid", "description": "Production server" } ],
+  "servers": [ { "url": "http://127.0.0.1:4010", "description": "Local Test Prism server" }, { "url": "https://api-work.eu.veri-das.com/xpressid", "description": "Sandbox server" }, { "url": "https://api.eu.veri-das.com/xpressid", "description": "Production server" } ],
   "paths":
     {
       "/api/v2/alive":
