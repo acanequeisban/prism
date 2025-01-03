@@ -9,6 +9,7 @@
   "dependencies": {
     "@stoplight/json": "3.21.7",
     "@stoplight/json-schema-ref-parser": "9.2.7",
+    "@stoplight/prism-cli": "file:",
     "@stoplight/prism-core": "^5.8.0",
     "@stoplight/prism-http": "5.12.0",
     "@stoplight/prism-http-server": "^5.12.0",
