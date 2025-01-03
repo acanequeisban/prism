@@ -1,0 +1,505 @@
+{
+  "openapi": "3.0.2",
+  "info": { "title": "XpressID API", "description": "Download Postman Collection: <a class=\"pc-css\" target=\"_blank\" href=\"../XpressID.postman_collection.zip\">Download</a><br><br>\n", "version": "3.5" },
+  "servers": [ { "url": "https://api-work.eu.veri-das.com/xpressid", "description": "Sandbox server" }, { "url": "https://api.eu.veri-das.com/xpressid", "description": "Production server" } ],
+  "paths":
+    {
+      "/api/v2/alive":
+        {
+          "get":
+            {
+              "tags": [ "Global checks" ],
+              "summary": "/api/v2/alive",
+              "description": "Check if the service is up.",
+              "responses": { "204": { "description": "NO CONTENT" }, "403": { "$ref": "#/components/responses/ForbiddenResource" }, "405": { "$ref": "#/components/responses/MethodNotAllowed" }, "409": { "$ref": "#/components/responses/InvalidTenant" }, "410": { "$ref": "#/components/responses/Gone" }, "500": { "$ref": "#/components/responses/InternalServerError" } },
+              "x-codeSamples":
+                [
+                  {
+                      "lang": "C#",
+                      "source": "var client = new RestClient(\"https://api-work.eu.veri-das.com/xpressid/api/v2/alive\");
+
+                        var request = new RestRequest(Method.GET);
+
+                        request.AddHeader(\"apikey\", \"REPLACE_KEY_VALUE\");
+
+                        IRestResponse response = client.Execute(request);"
+                    },
+                  {
+                      "lang": "Java",
+                      "source": "HttpResponse<String> response = Unirest.get(\"https://api-work.eu.veri-das.com/xpressid/api/v2/alive\")
+
+                        \  .header(\"apikey\", \"REPLACE_KEY_VALUE\")
+
+                        \  .asString();"
+                    },
+                  {
+                      "lang": "Javascript",
+                      "source": "const data = null;
+
+
+                        const xhr = new XMLHttpRequest();
+
+                        xhr.withCredentials = true;
+
+
+                        xhr.addEventListener(\"readystatechange\", function () {
+
+                        \  if (this.readyState === this.DONE) {
+
+                        \    console.log(this.responseText);
+
+                        \  }
+
+                        });
+
+
+                        xhr.open(\"GET\", \"https://api-work.eu.veri-das.com/xpressid/api/v2/alive\");
+
+                        xhr.setRequestHeader(\"apikey\", \"REPLACE_KEY_VALUE\");
+
+
+                        xhr.send(data);"
+                    },
+                  {
+                      "lang": "Php",
+                      "source": "<?php
+
+
+                        $request = new HttpRequest();
+
+                        $request->setUrl('https://api-work.eu.veri-das.com/xpressid/api/v2/alive');
+
+                        $request->setMethod(HTTP_METH_GET);
+
+
+                        $request->setHeaders([
+
+                        \  'apikey' => 'REPLACE_KEY_VALUE'
+
+                        ]);
+
+
+                        try {
+
+                        \  $response = $request->send();
+
+
+                        \  echo $response->getBody();
+
+                        } catch (HttpException $ex) {
+
+                        \  echo $ex;
+
+                        }"
+                    },
+                  {
+                      "lang": "Python",
+                      "source": "import http.client
+
+
+                        conn = http.client.HTTPSConnection(\"api-work.eu.veri-das.com\")
+
+
+                        headers = { 'apikey': \"REPLACE_KEY_VALUE\" }
+
+
+                        conn.request(\"GET\", \"/xpressid/api/v2/alive\", headers=headers)
+
+
+                        res = conn.getresponse()
+
+                        data = res.read()
+
+
+                        print(data.decode(\"utf-8\"))"
+                    },
+                  {
+                      "lang": "Ruby",
+                      "source": "require 'uri'
+
+                        require 'net/http'
+
+                        require 'openssl'
+
+
+                        url = URI(\"https://api-work.eu.veri-das.com/xpressid/api/v2/alive\")
+
+
+                        http = Net::HTTP.new(url.host, url.port)
+
+                        http.use_ssl = true
+
+                        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+
+                        request = Net::HTTP::Get.new(url)
+
+                        request[\"apikey\"] = 'REPLACE_KEY_VALUE'
+
+
+                        response = http.request(request)
+
+                        puts response.read_body"
+                    },
+                  {
+                      "lang": "Curl",
+                      "source": "curl --request GET \\
+
+                        \  --url https://api-work.eu.veri-das.com/xpressid/api/v2/alive \\
+
+                        \  --header 'apikey: REPLACE_KEY_VALUE'"
+                    }
+                ]
+            }
+        },
+      "/api/v2/token":
+        {
+          "post":
+            {
+              "tags": [ "Main flow" ],
+              "summary": "/api/v2/token",
+              "security": [ { "ApiKeyAuth": [ "apiKey" ] } ],
+              "description": "Creates and retrieves a token for accessing the Front.
+
+
+                The token returned to the response has an expiration date according to these rules:
+
+                \  1. When XpressID process is finished, the token expires (so it can not be used again).
+
+                \  2. If XpressID process is not completed within 15 minutes (from the token creation time), the token expires automatically.
+
+                \  3. If a resume onboarding is requested for a validation and a 200 is returned, the old token is deleted even if it is in its lifetime.
+
+                \  4. [Optional] It’s also possible to revoke the token manually using [api/v2/token endpoint with DELETE Method](./#/paths/~1api~1v2~1token~1/delete).\n",
+              "requestBody": { "content": { "application/json": { "schema": { "type": "object", "required": [ "data" ], "properties": { "data": { "type": "object", "description": "DATA_SCHEME. See the integration section [configuration](../../../../../xpressid/overview/latest/api/configuration/general/)" } } }, "example": { "data": { "platform": "web", "operationMode": "idv", "flowSetup": { "stages": [ "document", "selfie" ], "core": { "confirmProcess": true } } } } }, "multipart/form-data": { "schema": { "type": "object", "required": [ "data", "selfieImage" ], "properties": { "data": { "type": "object", "description": "DATA_SCHEME. See the integration section [configuration](../../../../../xpressid/overview/latest/api/configuration/general/)" }, "selfieImage": { "type": "string", "format": "binary", "description": "Selfie image as binary, sent as a file of the multipart/form-data only in authentication operation mode." } } } } } },
+              "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "access_token": { "type": "string", "description": "access token that will allow XpressID to be embedded. This access token will be used as a query parameter when embedding the iframe, and it's unique for each final user (two different users should not use the same token).", "example": "ACCESS_TOKEN" }, "expires_in": { "type": "number", "description": "Access token duration time before it gets expired", "example": 900 }, "validation_id": { "type": "string", "description": "validation_id associated to the token, implies that a new token has to be obtained as we keep the token-validation relation (1:1), in case the onboarding fails the new event `ProcessError` (see section [ProcessError](../../integration/#processerror)) has to be captured to invoke the XpressID Iframe again with a new token.", "example": "VALIDATION_ID" } } } } } }, "400": { "description": "BAD REQUEST", "content": { "application/json": { "schema": { "oneOf": [ { "$ref": "#/components/schemas/InvalidInputParameter" }, { "$ref": "#/components/schemas/OnboardingCompleted" }, { "$ref": "#/components/schemas/InvalidAuthorizationHeader" } ] } } } }, "401": { "description": "UNAUTHORIZED", "content": { "application/json": { "schema": { "oneOf": [ { "$ref": "#/components/schemas/InvalidCredential" } ] } } } }, "403": { "description": "FORBIDDEN", "content": { "application/json": { "schema": { "oneOf": [ { "$ref": "#/components/schemas/Forbidden" }, { "$ref": "#/components/responses/ForbiddenResource" } ] } } } }, "404": { "$ref": "#/components/responses/OnboardingNotFound" }, "405": { "$ref": "#/components/responses/MethodNotAllowed" }, "409": { "$ref": "#/components/responses/InvalidTenant" }, "410": { "$ref": "#/components/responses/Gone" }, "415": { "$ref": "#/components/responses/InvalidContentType" }, "500": { "$ref": "#/components/responses/InternalServerError" }, "502": { "description": "BAD GATEWAY", "content": { "application/json": { "schema": { "oneOf": [ { "$ref": "#/components/schemas/ValidasError" }, { "$ref": "#/components/schemas/OauthServerError" } ] } } } } },
+              "x-codeSamples":
+                [
+                  {
+                      "lang": "C#",
+                      "source": "var client = new RestClient(\"https://api-work.eu.veri-das.com/xpressid/api/v2/token\");
+
+                        var request = new RestRequest(Method.POST);
+
+                        request.AddHeader(\"content-type\", \"multipart/form-data\");
+
+                        request.AddHeader(\"apikey\", \"REPLACE_KEY_VALUE\");
+
+                        request.AddParameter(\"multipart/form-data\", \"{\\\"data\\\":{}}\", ParameterType.RequestBody);
+
+                        IRestResponse response = client.Execute(request);"
+                    },
+                  {
+                      "lang": "Java",
+                      "source": "HttpResponse<String> response = Unirest.post(\"https://api-work.eu.veri-das.com/xpressid/api/v2/token\")
+
+                        \  .header(\"content-type\", \"multipart/form-data\")
+
+                        \  .header(\"apikey\", \"REPLACE_KEY_VALUE\")
+
+                        \  .body(\"{\\\"data\\\":{}}\")
+
+                        \  .asString();"
+                    },
+                  {
+                      "lang": "Javascript",
+                      "source": "const data = JSON.stringify({
+
+                        \  \"data\": {}
+
+                        });
+
+
+                        const xhr = new XMLHttpRequest();
+
+                        xhr.withCredentials = true;
+
+
+                        xhr.addEventListener(\"readystatechange\", function () {
+
+                        \  if (this.readyState === this.DONE) {
+
+                        \    console.log(this.responseText);
+
+                        \  }
+
+                        });
+
+
+                        xhr.open(\"POST\", \"https://api-work.eu.veri-das.com/xpressid/api/v2/token\");
+
+                        xhr.setRequestHeader(\"content-type\", \"multipart/form-data\");
+
+                        xhr.setRequestHeader(\"apikey\", \"REPLACE_KEY_VALUE\");
+
+
+                        xhr.send(data);"
+                    },
+                  {
+                      "lang": "Php",
+                      "source": "<?php
+
+
+                        $request = new HttpRequest();
+
+                        $request->setUrl('https://api-work.eu.veri-das.com/xpressid/api/v2/token');
+
+                        $request->setMethod(HTTP_METH_POST);
+
+
+                        $request->setHeaders([
+
+                        \  'content-type' => 'multipart/form-data',
+
+                        \  'apikey' => 'REPLACE_KEY_VALUE'
+
+                        ]);
+
+
+                        $request->setBody('{\"data\":{}}');
+
+
+                        try {
+
+                        \  $response = $request->send();
+
+
+                        \  echo $response->getBody();
+
+                        } catch (HttpException $ex) {
+
+                        \  echo $ex;
+
+                        }"
+                    },
+                  {
+                      "lang": "Python",
+                      "source": "import http.client
+
+
+                        conn = http.client.HTTPSConnection(\"api-work.eu.veri-das.com\")
+
+
+                        payload = \"{\\\"data\\\":{}}\"
+
+
+                        headers = {
+
+                        \    'content-type': \"multipart/form-data\",
+
+                        \    'apikey': \"REPLACE_KEY_VALUE\"
+
+                        \    }
+
+
+                        conn.request(\"POST\", \"/xpressid/api/v2/token\", payload, headers)
+
+
+                        res = conn.getresponse()
+
+                        data = res.read()
+
+
+                        print(data.decode(\"utf-8\"))"
+                    },
+                  {
+                      "lang": "Ruby",
+                      "source": "require 'uri'
+
+                        require 'net/http'
+
+                        require 'openssl'
+
+
+                        url = URI(\"https://api-work.eu.veri-das.com/xpressid/api/v2/token\")
+
+
+                        http = Net::HTTP.new(url.host, url.port)
+
+                        http.use_ssl = true
+
+                        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+
+                        request = Net::HTTP::Post.new(url)
+
+                        request[\"content-type\"] = 'multipart/form-data'
+
+                        request[\"apikey\"] = 'REPLACE_KEY_VALUE'
+
+                        request.body = \"{\\\"data\\\":{}}\"
+
+
+                        response = http.request(request)
+
+                        puts response.read_body"
+                    },
+                  {
+                      "lang": "Curl",
+                      "source": "curl --request POST \\
+
+                        \  --url https://api-work.eu.veri-das.com/xpressid/api/v2/token \\
+
+                        \  --header 'apikey: REPLACE_KEY_VALUE' \\
+
+                        \  --header 'content-type: multipart/form-data' \\
+
+                        \  --data '{\"data\":{}}'"
+                    }
+                ]
+            }
+        },
+      "/api/v2/token/{token}":
+        {
+          "delete":
+            {
+              "tags": [ "Main flow" ],
+              "summary": "/api/v2/token/{token}",
+              "security": [ { "ApiKeyAuth": [ "apiKey" ] } ],
+              "description": "Revokes an active access token.\n",
+              "parameters": [ { "name": "token", "in": "path", "description": "ID resource to elimante", "required": true, "schema": { "type": "string" } } ],
+              "responses": { "204": { "description": "NO CONTENT" }, "400": { "description": "BAD REQUEST", "content": { "application/json": { "schema": { "oneOf": [ { "$ref": "#/components/schemas/InvalidInputParameter" }, { "$ref": "#/components/schemas/InvalidAuthorizationHeader" } ] } } } }, "401": { "description": "UNAUTHORIZED", "content": { "application/json": { "schema": { "oneOf": [ { "$ref": "#/components/schemas/InvalidCredential" } ] } } } }, "403": { "$ref": "#/components/responses/ForbiddenResource" }, "405": { "$ref": "#/components/responses/MethodNotAllowed" }, "409": { "$ref": "#/components/responses/InvalidTenant" }, "410": { "$ref": "#/components/responses/Gone" }, "415": { "$ref": "#/components/responses/InvalidContentType" }, "500": { "$ref": "#/components/responses/InternalServerError" }, "502": { "$ref": "#/components/responses/OauthServerError" } },
+              "x-codeSamples":
+                [
+                  {
+                      "lang": "C#",
+                      "source": "var client = new RestClient(\"https://api-work.eu.veri-das.com/xpressid/api/v2/token/{token}\");
+
+                        var request = new RestRequest(Method.DELETE);
+
+                        request.AddHeader(\"apikey\", \"REPLACE_KEY_VALUE\");
+
+                        IRestResponse response = client.Execute(request);"
+                    },
+                  {
+                      "lang": "Java",
+                      "source": "HttpResponse<String> response = Unirest.delete(\"https://api-work.eu.veri-das.com/xpressid/api/v2/token/{token}\")
+
+                        \  .header(\"apikey\", \"REPLACE_KEY_VALUE\")
+
+                        \  .asString();"
+                    },
+                  {
+                      "lang": "Javascript",
+                      "source": "const data = null;
+
+
+                        const xhr = new XMLHttpRequest();
+
+                        xhr.withCredentials = true;
+
+
+                        xhr.addEventListener(\"readystatechange\", function () {
+
+                        \  if (this.readyState === this.DONE) {
+
+                        \    console.log(this.responseText);
+
+                        \  }
+
+                        });
+
+
+                        xhr.open(\"DELETE\", \"https://api-work.eu.veri-das.com/xpressid/api/v2/token/{token}\");
+
+                        xhr.setRequestHeader(\"apikey\", \"REPLACE_KEY_VALUE\");
+
+
+                        xhr.send(data);"
+                    },
+                  {
+                      "lang": "Php",
+                      "source": "<?php
+
+
+                        $request = new HttpRequest();
+
+                        $request->setUrl('https://api-work.eu.veri-das.com/xpressid/api/v2/token/{token}');
+
+                        $request->setMethod(HTTP_METH_DELETE);
+
+
+                        $request->setHeaders([
+
+                        \  'apikey' => 'REPLACE_KEY_VALUE'
+
+                        ]);
+
+
+                        try {
+
+                        \  $response = $request->send();
+
+
+                        \  echo $response->getBody();
+
+                        } catch (HttpException $ex) {
+
+                        \  echo $ex;
+
+                        }"
+                    },
+                  {
+                      "lang": "Python",
+                      "source": "import http.client
+
+
+                        conn = http.client.HTTPSConnection(\"api-work.eu.veri-das.com\")
+
+
+                        headers = { 'apikey': \"REPLACE_KEY_VALUE\" }
+
+
+                        conn.request(\"DELETE\", \"/xpressid/api/v2/token/{token}\", headers=headers)
+
+
+                        res = conn.getresponse()
+
+                        data = res.read()
+
+
+                        print(data.decode(\"utf-8\"))"
+                    },
+                  {
+                      "lang": "Ruby",
+                      "source": "require 'uri'
+
+                        require 'net/http'
+
+                        require 'openssl'
+
+
+                        url = URI(\"https://api-work.eu.veri-das.com/xpressid/api/v2/token/{token}\")
+
+
+                        http = Net::HTTP.new(url.host, url.port)
+
+                        http.use_ssl = true
+
+                        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+
+                        request = Net::HTTP::Delete.new(url)
+
+                        request[\"apikey\"] = 'REPLACE_KEY_VALUE'
+
+
+                        response = http.request(request)
+
+                        puts response.read_body"
+                    },
+                  {
+                      "lang": "Curl",
+                      "source": "curl --request DELETE \\
+
+                        \  --url https://api-work.eu.veri-das.com/xpressid/api/v2/token/{token} \\
+
+                        \  --header 'apikey: REPLACE_KEY_VALUE'"
+                    }
+                ]
+            }
+        }
+    },
+  "components": { "securitySchemes": { "ApiKeyAuth": { "type": "apiKey", "in": "header", "name": "apikey" } }, "schemas": { "MethodNotAllowed": { "type": "object", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "MethodNotAllowed" ] }, "message": { "type": "string", "enum": [ "The requested method is not allowed for this endpoint" ] } }, "example": { "code": "MethodNotAllowed", "message": "The requested method is not allowed for this endpoint" } }, "InvalidInputParameter": { "type": "object", "description": "This response is obtained when the data does not have a correct JSON structure", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "InvalidInputParameter" ] }, "message": { "type": "string", "enum": [ "Data field contains invalid JSON" ] } }, "example": { "code": "InvalidInputParameter", "message": "Data field contains invalid JSON" } }, "InvalidCredential": { "type": "object", "description": "This response is obtained when the provided credential is invalid", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "InvalidCredential" ] }, "message": { "type": "string", "enum": [ "The provided credential is invalid" ] } }, "example": { "code": "InvalidCredential", "message": "The provided credential is invalid" } }, "OnboardingCompleted": { "type": "object", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "OnboardingCompleted" ] }, "message": { "type": "string", "enum": [ "Onboarding completed" ] } }, "example": { "code": "OnboardingCompleted", "message": "Onboarding completed" } }, "InvalidAuthorizationHeader": { "type": "object", "description": "This response is obtained when you have an incorrect header in the request.", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "InvalidAuthorizationHeader" ] }, "message": { "type": "string", "enum": [ "Authorization header is not valid" ] } }, "example": { "code": "InvalidAuthorizationHeader", "message": "Authorization header is not valid" } }, "Forbidden": { "type": "object", "description": "This response is obtained when the stage is not allowed to be used", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "Forbidden" ] }, "message": { "type": "string", "enum": [ "stage not allowed" ] } }, "example": { "code": "Forbidden", "message": "The flowSetup/stages: Selfie not allowed" } }, "OnboardingNotFound": { "type": "object", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "OnboardingNotFound" ] }, "message": { "type": "string", "enum": [ "Onboarding not found" ] } }, "example": { "code": "OnboardingNotFound", "message": "Onboarding not found" } }, "InvalidContentType": { "type": "object", "description": "This response is obtained when the service refuses to accept the request because the request's Content-Type is not supported by the service.", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "InvalidContentType" ] }, "message": { "type": "string", "enum": [ "Content-Type specified is not valid" ] } }, "example": { "code": "InvalidContentType", "message": "Content-Type specified is not valid" } }, "ValidasError": { "type": "object", "description": "This response is obtained when the validas service is not available.", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "ValidasError" ] }, "message": { "type": "string", "enum": [ "Validas service failed" ] } }, "example": { "code": "ValidasError", "message": "Validas service failed" } }, "OauthServerError": { "type": "object", "description": "This response is obtained when the oauth service is not available.", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "OauthServerError" ] }, "message": { "type": "string", "enum": [ "Oauth token request failed" ] } }, "example": { "code": "OauthServerError", "message": "Oauth token request failed" } }, "ForbiddenResource": { "type": "object", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "ForbiddenResource" ] }, "message": { "type": "string", "enum": [ "You don't have access to the requested resource" ] } }, "example": { "code": "ForbiddenResource", "message": "You don't have access to the requested resource" } }, "InvalidTenant": { "type": "object", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "InvalidTenant" ] }, "message": { "type": "string", "enum": [ "The database for the given customer does not exist" ] } }, "example": { "code": "InvalidTenant", "message": "The database for the given customer does not exist" } }, "Gone": { "type": "object", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "Gone" ] }, "message": { "type": "string", "enum": [ "The resource is gone" ] } }, "example": { "code": "Gone", "message": "The resource is gone" } }, "ServerError": { "type": "object", "required": [ "code", "message" ], "properties": { "code": { "type": "string", "enum": [ "InternalServerError" ] }, "message": { "type": "string", "enum": [ "An error occurred while processing your request" ] } }, "example": { "code": "InternalServerError", "message": "An error occurred while processing your request" } } }, "responses": { "MethodNotAllowed": { "description": "METHOD NOT ALLOWED", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MethodNotAllowed" } } } }, "OnboardingNotFound": { "description": "Onboarding Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OnboardingNotFound" } } } }, "InvalidContentType": { "description": "UNSUPPORTED MEDIA TYPE", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InvalidContentType" } } } }, "OauthServerError": { "description": "BAD GATEWAY", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OauthServerError" } } } }, "ForbiddenResource": { "description": "FORBIDDEN", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ForbiddenResource" } } } }, "InvalidTenant": { "description": "CONFLICT", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InvalidTenant" } } } }, "Gone": { "description": "GONE", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Gone" } } } }, "InternalServerError": { "description": "INTERNAL SERVER ERROR", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ServerError" } } } } } },
+  "security": [ { "ApiKeyAuth": [] } ]
+}
