@@ -1,6 +1,6 @@
 {
   "name": "@stoplight/prism-cli",
-  "version": "5.12.0",
+  "version": "5.14.2",
   "author": "Stoplight <support@stoplight.io>",
   "bin": {
     "prism": "./dist/index.js"
@@ -26,7 +26,8 @@
     "tslib": "^2.3.1",
     "uri-template-lite": "^22.9.0",
     "urijs": "^1.19.11",
-    "yargs": "^16.2.0"
+    "yargs": "^16.2.0",
+    "jsonrepair": "^3.12.0"
   },
   "engines": {
     "node": ">=18.20.1"
